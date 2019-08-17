@@ -7,12 +7,15 @@ import cherrypy
 from requests_oauthlib import OAuth2Session
 from google.oauth2.credentials import Credentials
 
+is_credentials_saved = False
 
-class oauth2Site(object):
+
+class Oauth2Site(object):
     """Website for handling oauth2."""
 
     def __init__(self, user_data, cred_file):
         """Init webpage."""
+        self.is_credentials_saved = False;
         self.cred_file = cred_file
         self.user_data = user_data
 
@@ -22,7 +25,8 @@ class oauth2Site(object):
             scope="https://www.googleapis.com/auth/assistant-sdk-prototype"
         )
 
-        self.auth_url, _ = self.oauth2.authorization_url(self.user_data['auth_uri'], access_type='offline', prompt='consent')
+        self.auth_url, _ = self.oauth2.authorization_url(self.user_data['auth_uri'],
+                                                         access_type='offline', prompt='consent')
 
     @cherrypy.expose
     def index(self):
@@ -43,7 +47,9 @@ class oauth2Site(object):
     @cherrypy.expose
     def token(self, token):
         """Read access token and process it."""
-        self.oauth2.fetch_token(self.user_data['token_uri'], client_secret=self.user_data['client_secret'], code=token)
+        global is_credentials_saved
+        self.oauth2.fetch_token(self.user_data['token_uri'],
+                                client_secret=self.user_data['client_secret'], code=token)
 
         # create credentials
         credentials = Credentials(
@@ -65,7 +71,14 @@ class oauth2Site(object):
                 'scopes': credentials.scopes,
             }))
 
-        sys.exit(0)
+        is_credentials_saved = True
+
+        return str("""<html>
+          <head></head>
+          <body>
+            The credentials has been saved
+          </body>
+        </html>""").format(url=self.auth_url)
 
 
 if __name__ == '__main__':
@@ -76,4 +89,8 @@ if __name__ == '__main__':
         user_data = json.load(data)['installed']
 
     cherrypy.config.update({'server.socket_port': 9324, 'server.socket_host': '0.0.0.0'})
-    cherrypy.quickstart(oauth2Site(user_data, cred_json))
+    cherrypy.engine.subscribe(
+            'after_request', lambda: sys.exit(0) if is_credentials_saved else None)
+    server = cherrypy.quickstart(Oauth2Site(user_data, cred_json))
+
+
