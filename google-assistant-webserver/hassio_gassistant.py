@@ -24,7 +24,7 @@ except (SystemError, ImportError):
     import assistant_helpers
 
 from flask import Flask, request, jsonify
-from flask_restful import Resource, Api
+from flask_restful import Resource, Api, reqparse
 
 app = Flask(__name__)
 api = Api(app)
@@ -33,24 +33,29 @@ ASSISTANT_API_ENDPOINT = 'embeddedassistant.googleapis.com'
 DEFAULT_GRPC_DEADLINE = 60 * 3 + 5
 PLAYING = embedded_assistant_pb2.ScreenOutConfig.PLAYING
 
+parser = reqparse.RequestParser()
+parser.add_argument('message', type=str, help='Message to Google Assistant', location='json',
+                    required=True)
+
+
 class BroadcastMessage(Resource):
-    def get(self):
-        message = request.args.get('message', default = 'This is a test!')
-        text_query = 'broadcast '+message
-        response_text, response_html = assistant.assist(text_query=text_query)
+    def post(self):
+        args = parser.parse_args()
+        response_text, response_html = assistant.assist(text_query=f'broadcast {args["message"]}')
         logging.debug(response_text)
         return {'status': 'OK'}
 
-api.add_resource(BroadcastMessage, '/broadcast_message')
 
 class Command(Resource):
-    def get(self):
-        message = request.args.get('message', default = 'This is a test!')
-        response_text, response_html = assistant.assist(text_query=message)
+    def post(self):
+        args = parser.parse_args()
+        response_text, response_html = assistant.assist(text_query=args["message"])
         logging.debug(response_text)
         return {'status': 'OK'}
 
+
 api.add_resource(Command, '/command')
+api.add_resource(BroadcastMessage, '/broadcast_message')
 
 
 class GoogleTextAssistant(object):
@@ -75,9 +80,7 @@ class GoogleTextAssistant(object):
         # Force reset of first conversation.
         self.is_new_conversation = True
         self.display = display
-        self.assistant = embedded_assistant_pb2_grpc.EmbeddedAssistantStub(
-            channel
-        )
+        self.assistant = embedded_assistant_pb2_grpc.EmbeddedAssistantStub(channel)
         self.deadline = deadline_sec
 
     def __enter__(self):
@@ -132,6 +135,7 @@ class GoogleTextAssistant(object):
                 text_response = resp.dialog_state_out.supplemental_display_text()
         return text_response, html_response
 
+
 if __name__ == '__main__':
     global assistant
 
@@ -150,6 +154,6 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
 
     # Create the text assistant
-    assistant = GoogleTextAssistant('en-US', 'HA_GA', 'HA_GA_TEXT_SERVER',
-                             True, grpc_channel, DEFAULT_GRPC_DEADLINE)
+    assistant = GoogleTextAssistant('en-US', 'HA_GA', 'HA_GA_TEXT_SERVER', True, grpc_channel,
+                                    DEFAULT_GRPC_DEADLINE)
     app.run(host='0.0.0.0')
