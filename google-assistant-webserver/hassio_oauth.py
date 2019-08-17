@@ -47,6 +47,7 @@ class Oauth2Site(object):
     @cherrypy.expose
     def token(self, token):
         """Read access token and process it."""
+        print('testing')
         global is_credentials_saved
         self.oauth2.fetch_token(self.user_data['token_uri'],
                                 client_secret=self.user_data['client_secret'], code=token)
