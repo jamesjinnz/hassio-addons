@@ -1,0 +1,6 @@
+.docker
+.idea
+google-assistant-webserver/client_secret.json
+google-assistant-webserver/cred.json
+google-assistant-webserver/google_assistant.json
+google-assistant-webserver/venv/
