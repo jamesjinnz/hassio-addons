@@ -1,0 +1,3 @@
+[submodule "addon-ssh"]
+	path = addon-ssh
+	url = git@github.com:carlba/addon-ssh.git
