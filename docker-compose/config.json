@@ -1,7 +1,7 @@
 {
   "name": "Docker Compose",
   "version": "dev",
-  "slug": "ssh",
+  "slug": "docker-compose",
   "description": "Run Docker Compose",
   "url": "https://github.com/hassio-addons/addon-ssh",
   "advanced": true,
