@@ -1,0 +1,17 @@
+{
+    "name": "Resting Catt",
+    "version": "0.0.1a10",
+    "slug": "resting_catt",
+    "description": "REST API for CATT",
+    "arch": ["amd64", "armv7", "aarch64"],
+    "startup": "before",
+    "url": "https://github.com/carlba/hassio-addons/tree/master/resting-catt",
+    "boot": "auto",
+    "options": {
+    },
+    "schema": {},
+    "ports": {
+      "9898/tcp": 9898
+    },
+    "image": "carlba/resting-catt"
+}
