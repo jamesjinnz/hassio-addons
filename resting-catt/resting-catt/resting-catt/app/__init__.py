@@ -1,8 +1,13 @@
-from flask import Flask, request, abort, jsonify, make_response
+import logging
+
+from flask import Flask, request, abort, jsonify
 from catt.controllers import setup_cast
 from catt.error import CastError
+from werkzeug.exceptions import HTTPException
 
 app = Flask(__name__)
+
+logging.basicConfig(level=logging.INFO)
 
 
 @app.route("/")
@@ -13,21 +18,20 @@ def root():
 
 
 @app.errorhandler(422)
-def unprocessable_entity(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
-    return response
-
-
 @app.errorhandler(500)
-def unprocessable_entity(error):
-    response = jsonify(error.to_dict())
-    response.status_code = error.status_code
+def handle_http_error(error):
+    response = jsonify({
+        "code": error.code,
+        "name": error.name,
+        "description": error.description,
+    })
+    response.status_code = error.code
     return response
 
 
 @app.route("/cast_site", methods=['POST'])
 def cast_site():
+    app.logger.info(f"Request: {str(request)}")
     data = request.json
     if all(key in data for key in ('device', 'url')):
         try:
