@@ -47,6 +47,23 @@ def cast_site():
     else:
         abort(422, 'device and url is required in post data')
 
+@app.route("/stop_cast", methods=['POST'])
+def stop_cast():
+    app.logger.info(f"Request: {str(request)}")
+    data = request.json
+    if all(key in data for key in ('device', 'url')):
+        try:
+            cst = setup_cast(data['device'],
+                             controller="dashcast",
+                             action="load_url",
+                             prep="app")
+            cst.load_url(data['url'])
+            return '', 204
+        except CastError as e:
+            abort(500, e)
+
+    else:
+        abort(422, 'device and url is required in post data')        
 
 def run():
     app.run(port=9898, host='0.0.0.0')
